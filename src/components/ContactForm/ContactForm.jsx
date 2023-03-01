@@ -1,24 +1,15 @@
-import React from 'react';
-import { Formik, ErrorMessage  } from 'formik';
-import { Label, LabelName, Button, ErrorText, Form, Input } from './ContactForm.styled';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup'; // for React-hook-form work with Yup
+import * as yup from 'yup'; // Form validation
+import {
+  Label,
+  LabelName,
+  Button,
+  ErrorText,
+  Form,
+  Input,
+} from './ContactForm.styled';
 import PropTypes from 'prop-types';
-import * as yup from 'yup';
-
-
-
-const FormError = ({ name }) => {
-  return (
-    <ErrorMessage
-      name={name}
-      render={message => <ErrorText>{message}</ErrorText>}
-    />
-  );
-};
-
-const initialValues = {
-  name: '',
-  number: '',
-};
 
 const schema = yup.object().shape({
   name: yup.string().required(),
@@ -31,47 +22,64 @@ const schema = yup.object().shape({
     .required(),
 });
 
-const ContactForm = ({addContact}) => {
-    const handleSubmit = (values, { resetForm }) => {
-    addContact(values);
-    resetForm();
+export function ContactForm({ addContact }) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: { name: '', number: '' },
+    resolver: yupResolver(schema),
+  });
+  const onSubmit = data => {
+    addContact(data);
+    reset();
   };
-   
-        return (
-          <Formik
-            initialValues={initialValues}
-            onSubmit={handleSubmit}
-            validationSchema={schema}>
-           
-            <Form >
-                <Label>
-                    <LabelName>Name</LabelName>
-                    <Input
-                        type='text'
-                        name='name'
-                        title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-                        />
-                <FormError name="name" />
-              </Label>
 
-                <Label>
-                    <LabelName>Number</LabelName>
-                    <Input
-                        type='tel'
-                        name='number'
-                        title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-                       
-                        />
-                    <FormError name="number" />
-                </Label>
-                <Button type='submit'>Add contact</Button>
-                </Form>
-                </Formik>
-        );
-    }
+  return (
+    <Form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <Label>
+          <LabelName>Name</LabelName>
+          <Input
+            {...register('name', {
+              required: true,
+            })}
+            aria-invalid={errors['name'] ? 'true' : 'false'}
+            type="text"
+            title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+          />
+        </Label>
+        {errors['name'] && (
+          <ErrorText role="alert">{errors['name']?.message}</ErrorText>
+        )}
+      </div>
 
+      <div>
+        <Label>
+          <LabelName>Number</LabelName>
+          <Input
+            {...register('number', {
+              required: true,
+            })}
+            aria-invalid={errors['number'] ? 'true' : 'false'}
+            type="tel"
+            title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+          />
+        </Label>
+        {errors['number'] && (
+          <ErrorText role="alert">{errors['number']?.message}</ErrorText>
+        )}
+      </div>
+
+      <Button type="submit">Add contact</Button>
+    </Form>
+  );
+}
 
 ContactForm.propTypes = {
-    addContact: PropTypes.func.isRequired
+  addContact: PropTypes.func.isRequired,
 };
+
 export default ContactForm;
